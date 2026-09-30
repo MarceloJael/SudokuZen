@@ -353,8 +353,11 @@ body {
   justify-content: center;
 }
 .sz-notes span.is-match {
-  color: var(--color-cell-text-note-match);
+  background: var(--color-note-match-bg);
+  color: var(--color-note-match-text);
   font-weight: 800;
+  border-radius: var(--radius-sm);
+  margin: 8%;
 }
 
 /* Vitória: onda diagonal */
