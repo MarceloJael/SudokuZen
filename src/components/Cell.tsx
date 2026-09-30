@@ -30,7 +30,7 @@ function describeCell(row: number, col: number, view: CellView): string {
   } else {
     content = 'vazia';
   }
-  const error = view.hasError ? ', conflito' : '';
+  const error = view.hasError ? ', incorreto' : '';
   return `${base}, ${content}${error}`;
 }
 

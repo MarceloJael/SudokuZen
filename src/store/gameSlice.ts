@@ -92,13 +92,18 @@ function setCell(grid: Grid, row: number, col: number, cell: CellState): Grid {
 }
 
 /** Apply a move's `after` (or `before` on undo) and refresh error flags. */
-function applyMove(grid: Grid, move: Move, direction: 'do' | 'undo'): Grid {
+function applyMove(
+  grid: Grid,
+  move: Move,
+  direction: 'do' | 'undo',
+  solution: NumericGrid | null,
+): Grid {
   let next = grid;
   for (const change of [move, ...(move.peers ?? [])]) {
     const cell = direction === 'do' ? change.after : change.before;
     next = setCell(next, change.row, change.col, cloneCell(cell));
   }
-  return withRecomputedErrors(next);
+  return withRecomputedErrors(next, solution);
 }
 
 /**
@@ -240,7 +245,12 @@ const gameSlice = createSlice({
       if (after.value !== null) {
         move.peers = pruneNotes(state.currentGrid, row, col, after.value);
       }
-      state.currentGrid = applyMove(state.currentGrid, move, 'do');
+      state.currentGrid = applyMove(
+        state.currentGrid,
+        move,
+        'do',
+        state.solutionGrid,
+      );
       state.past.push(move);
       state.future = [];
       state.activeNumber = after.value;
@@ -266,7 +276,12 @@ const gameSlice = createSlice({
         before: cloneCell(before),
         after: cloneCell(after),
       };
-      state.currentGrid = applyMove(state.currentGrid, move, 'do');
+      state.currentGrid = applyMove(
+        state.currentGrid,
+        move,
+        'do',
+        state.solutionGrid,
+      );
       state.past.push(move);
       state.future = [];
       refreshStatus(state);
@@ -275,7 +290,12 @@ const gameSlice = createSlice({
     undo(state) {
       const move = state.past.pop();
       if (!move || !state.currentGrid) return;
-      state.currentGrid = applyMove(state.currentGrid, move, 'undo');
+      state.currentGrid = applyMove(
+        state.currentGrid,
+        move,
+        'undo',
+        state.solutionGrid,
+      );
       state.future.push(move);
       state.selected = { row: move.row, col: move.col };
       refreshStatus(state);
@@ -284,7 +304,12 @@ const gameSlice = createSlice({
     redo(state) {
       const move = state.future.pop();
       if (!move || !state.currentGrid) return;
-      state.currentGrid = applyMove(state.currentGrid, move, 'do');
+      state.currentGrid = applyMove(
+        state.currentGrid,
+        move,
+        'do',
+        state.solutionGrid,
+      );
       state.past.push(move);
       state.selected = { row: move.row, col: move.col };
       refreshStatus(state);
@@ -355,7 +380,12 @@ const gameSlice = createSlice({
       if (after.value !== null) {
         move.peers = pruneNotes(grid, row, col, after.value);
       }
-      state.currentGrid = applyMove(state.currentGrid, move, 'do');
+      state.currentGrid = applyMove(
+        state.currentGrid,
+        move,
+        'do',
+        state.solutionGrid,
+      );
       state.past.push(move);
       state.future = [];
       state.selected = target;

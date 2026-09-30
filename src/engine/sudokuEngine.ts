@@ -436,14 +436,22 @@ export function toNumericGrid(grid: Grid): NumericGrid {
 /**
  * Recompute the `hasError` flag on every cell of a `Grid`, returning a NEW grid
  * (immutable-friendly). A cell errors when its value conflicts with another
- * filled cell per Sudoku rules. Fixed clues never error.
+ * filled cell per Sudoku rules or, when `solution` is given, when its value
+ * differs from the solution — a rule-legal digit can still be a dead end.
+ * Fixed clues never error.
  */
-export function withRecomputedErrors(grid: Grid): Grid {
+export function withRecomputedErrors(
+  grid: Grid,
+  solution?: NumericGrid | null,
+): Grid {
   const numeric = toNumericGrid(grid);
   const conflicts = findConflicts(numeric);
   return grid.map((row, r) =>
     row.map((cell, c) => {
-      const hasError = !cell.isFixed && conflicts.has(`${r},${c}`);
+      const wrong =
+        !!solution && cell.value !== null && cell.value !== solution[r]?.[c];
+      const hasError =
+        !cell.isFixed && (conflicts.has(`${r},${c}`) || wrong);
       return hasError === cell.hasError ? cell : { ...cell, hasError };
     }),
   ) as unknown as Grid;

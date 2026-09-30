@@ -281,6 +281,21 @@ describe('UI grid conversions', () => {
     expect(recomputed[5]![5]).toBe(withValue[5]![5]);
   });
 
+  it('flags a rule-legal value that differs from the solution', () => {
+    const grid = toCellGrid(createEmptyNumericGrid());
+    // SOLVED[0][0] is 5; a lone 1 breaks no rule but leads to a dead end.
+    const withValue = grid.map((row, r) =>
+      row.map((cell, c) => (r === 0 && c === 0 ? { ...cell, value: 1 } : cell)),
+    ) as unknown as typeof grid;
+    expect(withRecomputedErrors(withValue)[0]![0]!.hasError).toBe(false);
+    expect(withRecomputedErrors(withValue, SOLVED)[0]![0]!.hasError).toBe(true);
+
+    const correct = withValue.map((row, r) =>
+      row.map((cell, c) => (r === 0 && c === 0 ? { ...cell, value: 5 } : cell)),
+    ) as unknown as typeof grid;
+    expect(withRecomputedErrors(correct, SOLVED)[0]![0]!.hasError).toBe(false);
+  });
+
   it('never flags fixed clues as errors', () => {
     const grid = toCellGrid(SOLVED);
     const recomputed = withRecomputedErrors(grid);
