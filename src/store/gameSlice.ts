@@ -25,12 +25,20 @@ import {
 
 export type GameStatus = 'idle' | 'generating' | 'playing' | 'solved';
 
-/** A single reversible change to one cell. */
-interface Move {
+/** A reversible change to one cell. */
+interface CellChange {
   row: number;
   col: number;
   before: CellState;
   after: CellState;
+}
+
+/**
+ * A single user action. `peers` holds side effects on other cells (e.g.
+ * notes pruned from the same row/column/box) so undo restores them together.
+ */
+interface Move extends CellChange {
+  peers?: CellChange[];
 }
 
 export interface GameState {
@@ -85,9 +93,44 @@ function setCell(grid: Grid, row: number, col: number, cell: CellState): Grid {
 
 /** Apply a move's `after` (or `before` on undo) and refresh error flags. */
 function applyMove(grid: Grid, move: Move, direction: 'do' | 'undo'): Grid {
-  const cell = direction === 'do' ? move.after : move.before;
-  const next = setCell(grid, move.row, move.col, cloneCell(cell));
+  let next = grid;
+  for (const change of [move, ...(move.peers ?? [])]) {
+    const cell = direction === 'do' ? change.after : change.before;
+    next = setCell(next, change.row, change.col, cloneCell(cell));
+  }
   return withRecomputedErrors(next);
+}
+
+/**
+ * Collect the note removals caused by placing `digit` at (row, col): every
+ * other cell in the same row, column or 3x3 box loses that pencil mark.
+ */
+function pruneNotes(
+  grid: Grid,
+  row: number,
+  col: number,
+  digit: number,
+): CellChange[] {
+  const boxRow = row - (row % 3);
+  const boxCol = col - (col % 3);
+  const changes: CellChange[] = [];
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      if (r === row && c === col) continue;
+      const sameBox =
+        r >= boxRow && r < boxRow + 3 && c >= boxCol && c < boxCol + 3;
+      if (r !== row && c !== col && !sameBox) continue;
+      const cell = grid[r]?.[c];
+      if (!cell || !cell.notes.includes(digit)) continue;
+      changes.push({
+        row: r,
+        col: c,
+        before: cloneCell(cell),
+        after: { ...cell, notes: cell.notes.filter((n) => n !== digit) },
+      });
+    }
+  }
+  return changes;
 }
 
 function refreshStatus(state: GameState): void {
@@ -194,6 +237,9 @@ const gameSlice = createSlice({
         before: cloneCell(before),
         after: cloneCell(after),
       };
+      if (after.value !== null) {
+        move.peers = pruneNotes(state.currentGrid, row, col, after.value);
+      }
       state.currentGrid = applyMove(state.currentGrid, move, 'do');
       state.past.push(move);
       state.future = [];
@@ -306,6 +352,9 @@ const gameSlice = createSlice({
         before: cloneCell(before),
         after: cloneCell(after),
       };
+      if (after.value !== null) {
+        move.peers = pruneNotes(grid, row, col, after.value);
+      }
       state.currentGrid = applyMove(state.currentGrid, move, 'do');
       state.past.push(move);
       state.future = [];

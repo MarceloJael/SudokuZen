@@ -104,6 +104,24 @@ describe('gameSlice — input', () => {
     expect(next.currentGrid?.[0]?.[0]?.notes).toEqual([7]);
   });
 
+  it('placing a value removes that note from row, column and box peers', () => {
+    let next = reducer(state, toggleNotesMode());
+    next = reducer(next, selectCell({ row: 0, col: 1 })); // same row & box
+    next = reducer(next, inputDigit(5));
+    next = reducer(next, inputDigit(3));
+    next = reducer(next, toggleNotesMode());
+    next = reducer(next, selectCell({ row: 0, col: 0 }));
+    next = reducer(next, inputDigit(5));
+    expect(next.currentGrid?.[0]?.[1]?.notes).toEqual([3]);
+
+    // Undo restores both the value and the pruned note.
+    next = reducer(next, undo());
+    expect(next.currentGrid?.[0]?.[0]?.value).toBeNull();
+    expect(next.currentGrid?.[0]?.[1]?.notes).toEqual([3, 5]);
+    next = reducer(next, redo());
+    expect(next.currentGrid?.[0]?.[1]?.notes).toEqual([3]);
+  });
+
   it('erase clears value and notes', () => {
     let next = reducer(state, inputDigit(5));
     next = reducer(next, eraseCell());
