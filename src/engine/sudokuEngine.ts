@@ -450,8 +450,7 @@ export function withRecomputedErrors(
     row.map((cell, c) => {
       const wrong =
         !!solution && cell.value !== null && cell.value !== solution[r]?.[c];
-      const hasError =
-        !cell.isFixed && (conflicts.has(`${r},${c}`) || wrong);
+      const hasError = !cell.isFixed && (conflicts.has(`${r},${c}`) || wrong);
       return hasError === cell.hasError ? cell : { ...cell, hasError };
     }),
   ) as unknown as Grid;
