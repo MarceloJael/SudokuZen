@@ -12,6 +12,8 @@ import { useTimer, fmtTime } from './hooks/useTimer';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { clearHint } from './store/gameSlice';
 import type { Theme } from './theme';
+import markLight from './imgs/mark-light-512.png';
+import markDark from './imgs/mark-dark-512.png';
 
 export default function App() {
   const dispatch = useAppDispatch();
@@ -47,7 +49,23 @@ export default function App() {
       <div className="sz-game">
         <header className="sz-appbar">
           <span aria-hidden="true" />
-          <h1 className="sz-title sz-appbar__title">SudokuZen</h1>
+          <h1 className="sz-title sz-appbar__title">
+            <img
+              className="sz-logo sz-logo--light"
+              src={markLight}
+              alt=""
+              width={28}
+              height={28}
+            />
+            <img
+              className="sz-logo sz-logo--dark"
+              src={markDark}
+              alt=""
+              width={28}
+              height={28}
+            />
+            SudokuZen
+          </h1>
           <div className="sz-appbar__actions">
             <ThemeToggle initial={theme} />
           </div>

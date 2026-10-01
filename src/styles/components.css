@@ -772,7 +772,25 @@ body {
   padding: var(--space-4);
 }
 .sz-appbar__title {
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+/* Logo mark — light variant for light/hc themes, dark variant for dark. */
+.sz-logo {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+.sz-logo--dark {
+  display: none;
+}
+[data-theme='dark'] .sz-logo--light {
+  display: none;
+}
+[data-theme='dark'] .sz-logo--dark {
+  display: block;
 }
 .sz-appbar__actions {
   display: flex;
